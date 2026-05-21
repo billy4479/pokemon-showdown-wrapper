@@ -23,8 +23,8 @@
           ]
         );
 
-        pokemon-showdown-wrapper = pkgs.stdenv.mkDerivation (finalAttrs: {
-          pname = "pokemon-showdown-wrapper";
+        showdownJsWorker = pkgs.stdenv.mkDerivation (finalAttrs: {
+          pname = "showdown-js-worker";
           version = "1.0.0";
 
           src = pkgs.nix-gitignore.gitignoreSource [ ] ./.;
@@ -48,28 +48,61 @@
           '';
 
           installPhase = ''
-            mkdir -p $out/share/pokemon-showdown-wrapper
+            mkdir -p $out/share/showdown-js-worker
 
-            # Copy compiled JS
-            cp -r dist package.json pnpm-lock.yaml pnpm-workspace.yaml $out/share/pokemon-showdown-wrapper
+            cp -r dist package.json pnpm-lock.yaml pnpm-workspace.yaml $out/share/showdown-js-worker
 
             mkdir -p $out/bin
             makeWrapper ${pkgs.nodejs_latest}/bin/node $out/bin/list-allowed-moves \
-              --add-flags "$out/share/pokemon-showdown-wrapper/dist/list-allowed-moves.js"
+              --add-flags "$out/share/showdown-js-worker/dist/list-allowed-moves.js"
             makeWrapper ${pkgs.nodejs_latest}/bin/node $out/bin/showdown-wrapper \
-              --add-flags "$out/share/pokemon-showdown-wrapper/dist/showdown-wrapper.js"
+              --add-flags "$out/share/showdown-js-worker/dist/showdown-wrapper.js"
 
-            cd $out/share/pokemon-showdown-wrapper
+            cd $out/share/showdown-js-worker
             pnpm install --prod --offline --frozen-lockfile --node-linker=hoisted
             rm package.json pnpm-lock.yaml pnpm-workspace.yaml
           '';
 
           meta.mainProgram = "showdown-wrapper";
         });
+
+        showdownPyClient = pkgs.python3.pkgs.buildPythonPackage {
+          pname = "showdown-wrapper";
+          version = "0.1.0";
+
+          src = pkgs.nix-gitignore.gitignoreSource [ ] ./.;
+
+          pyproject = true;
+
+          postPatch = ''
+            cat > showdown_wrapper/_build_data.py <<EOF
+            DEFAULT_WORKER_PATH = "${showdownJsWorker}/bin/showdown-wrapper"
+            EOF
+          '';
+
+          nativeBuildInputs = [
+            (pkgs.python3.withPackages (
+              python-pkgs: with python-pkgs; [
+                setuptools
+                wheel
+              ]
+            ))
+          ];
+
+          propagatedBuildInputs = [ showdownJsWorker ];
+
+          meta = with lib; {
+            description = "Python client for showdown-js-worker stdio protocol";
+            license = licenses.mit;
+          };
+        };
       in
       {
-        packages.default = pokemon-showdown-wrapper;
-        packages.pokemon-showdown-wrapper = pokemon-showdown-wrapper;
+        packages = {
+          default = showdownPyClient;
+          showdown-js-worker = showdownJsWorker;
+          showdown-py-client = showdownPyClient;
+        };
 
         devShells.default = pkgs.mkShell {
           packages = with pkgs; [
@@ -82,7 +115,10 @@
             pyPkgs
           ];
 
-          inputsFrom = [ pokemon-showdown-wrapper ];
+          inputsFrom = [
+            showdownJsWorker
+            showdownPyClient
+          ];
         };
       }
     );
