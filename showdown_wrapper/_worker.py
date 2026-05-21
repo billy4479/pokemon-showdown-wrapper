@@ -213,10 +213,10 @@ class ShowdownWorker:
             )
 
             await self._send(
-                {"type": "choice", "player": 0, "slots": list(slots0)}
+                {"type": "choice", "player": 0, "slots": [slots0]}
             )
             await self._send(
-                {"type": "choice", "player": 1, "slots": list(slots1)}
+                {"type": "choice", "player": 1, "slots": [slots1]}
             )
 
             msg = await self._read_message()

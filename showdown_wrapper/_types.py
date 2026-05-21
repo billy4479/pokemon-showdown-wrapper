@@ -90,7 +90,7 @@ class BattleResult:
     turns: int
 
 
-MoveSelector = Callable[[PlayerState, PlayerState], tuple[list[int], list[int]]]
+MoveSelector = Callable[[PlayerState, PlayerState], tuple[int, int]]
 
 
 @dataclass(frozen=True)
