@@ -81,6 +81,36 @@ class PlayerState:
     terrain: str = ""
     turn: int = 0
 
+    def __str__(self) -> str:
+        lines = []
+        lines.append(f"PlayerState(player={self.player})")
+        lines.append(f"  turn: {self.turn}")
+        lines.append(f"  weather: {self.weather!r}")
+        lines.append(f"  terrain: {self.terrain!r}")
+        lines.append(f"  pokemon_left: {self.pokemon_left}")
+
+        lines.append(f"  side_conditions: {dict(sorted(self.side_conditions.items()))}")
+
+        lines.append(f"  slots:")
+        for i, s in enumerate(self.slots):
+            parts = [f"    [{i}]"]
+            for k, v in s.items():
+                parts.append(f"{k}={v!r}")
+            lines.append(" ".join(parts))
+
+        lines.append(f"  pokemon:")
+        if self.pokemon is None:
+            lines.append("    None")
+        else:
+            for k, v in self.pokemon.items():
+                if isinstance(v, dict):
+                    items = " ".join(f"{sk}={sv!r}" for sk, sv in sorted(v.items()))
+                    lines.append(f"    {k}: {items}")
+                else:
+                    lines.append(f"    {k}: {v!r}")
+
+        return "\n".join(lines)
+
 
 @dataclass(frozen=True)
 class BattleResult:
