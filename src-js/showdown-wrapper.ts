@@ -11,6 +11,8 @@ const BATTLE_RULES = [
     'Freeze Clause Mod',
     'Endless Battle Clause',
     'Exact HP Mod',
+    '- All Abilities',
+    '+ No Ability',
 ]
 
 const battleFormatName = dex.formats.validate(
@@ -100,7 +102,6 @@ function getSideState(sideIndex: number) {
             hp: pokemon.hp,
             maxhp: pokemon.maxhp,
             status: pokemon.status || '',
-            ability: pokemon.ability,
             item: pokemon.item,
             boosts: {
                 atk: boosts.atk || 0,
@@ -148,7 +149,6 @@ function getBattleStartInfo() {
             spd: p.baseStoredStats.spd,
             spe: p.baseStoredStats.spe,
         },
-        ability: p.ability,
         item: p.item,
         hp: p.hp,
         maxhp: p.maxhp,
@@ -249,20 +249,11 @@ function generateRandomOpponent(rng: Rng): any {
             chosenMoves.push(shuffledMoves[i]!)
         }
 
-        const abilitySlots = ['0', '1', 'H', 'S']
-        let ability = ''
-        for (const slot of abilitySlots) {
-            if ((species.abilities as any)[slot]) {
-                ability = (species.abilities as any)[slot]
-                break
-            }
-        }
-
         return {
             name: species.name,
             species: species.name,
             item: '',
-            ability,
+            ability: '',
             moves: chosenMoves,
             nature: 'Hardy',
             gender: species.gender || 'M',
@@ -287,7 +278,7 @@ function handleInit(msg: any) {
         name: aiDisplayName,
         types: ai.types,
         baseStats: computedBaseStats,
-        abilities: { 0: ai.ability },
+        abilities: { 0: '' },
         weightkg: 0,
         num: 0,
         color: '',
@@ -312,7 +303,7 @@ function handleInit(msg: any) {
         name: aiDisplayName,
         species: aiSpeciesId,
         item: '',
-        ability: ai.ability,
+        ability: '',
         moves: ai.moves,
         nature: 'Hardy',
         gender: 'N',

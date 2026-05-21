@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, NotRequired, TypedDict
+from typing import NotRequired, TypedDict
 
 
 Stats = TypedDict("Stats", {"hp": int, "atk": int, "def": int, "spa": int, "spd": int, "spe": int})
@@ -22,7 +22,6 @@ class ActivePokemonInfo(TypedDict):
     hp: int
     maxhp: int
     status: str
-    ability: str
     item: str
     boosts: Boosts
     fainted: bool
@@ -35,7 +34,6 @@ class AIConfig(TypedDict):
     species: str
     types: list[str]
     stats: Stats
-    ability: str
     moves: list[str]
 
 
@@ -55,7 +53,6 @@ class PokemonInfo(TypedDict):
     species: str
     types: list[str]
     stats: Stats
-    ability: str
     item: str
     hp: int
     maxhp: int
