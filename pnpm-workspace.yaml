@@ -1,0 +1,5 @@
+allowBuilds:
+    better-sqlite3: true
+    esbuild: true
+    pokemon-showdown: true
+    sqlite3: true
