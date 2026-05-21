@@ -24,6 +24,35 @@ function send(msg: any) {
     process.stdout.write(JSON.stringify(msg) + '\n')
 }
 
+class Rng {
+    private s: number
+
+    constructor(seed?: number) {
+        if (seed === undefined) {
+            seed = Math.floor(Math.random() * 2147483647)
+        }
+        this.s = seed | 0
+    }
+
+    random(): number {
+        this.s = (this.s + 0x6d2b79f5) | 0
+        let t = Math.imul(this.s ^ (this.s >>> 15), 1 | this.s)
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+    }
+
+    shuffle<T>(arr: T[]): T[] {
+        const result = [...arr]
+        for (let i = result.length - 1; i > 0; i--) {
+            const j = Math.floor(this.random() * (i + 1))
+            const tmp = result[j]!
+            result[j] = result[i]!
+            result[i] = tmp
+        }
+        return result
+    }
+}
+
 function computeBaseStats(desired: {
     hp: number
     atk: number
@@ -146,27 +175,27 @@ function processTurn() {
     sendStateFor(1)
 }
 
-function pickRandomFromPool() {
-    const idx = Math.floor(Math.random() * hardcodedOpponents.length)
+function pickRandomFromPool(rng: Rng) {
+    const idx = Math.floor(rng.random() * hardcodedOpponents.length)
     return { ...hardcodedOpponents[idx] }
 }
 
-function pickOpponentFromPool(speciesName: string | null) {
+function pickOpponentFromPool(speciesName: string | null, rng: Rng) {
     if (speciesName) {
         const found = hardcodedOpponents.find(
             (o) => toID(o.species) === toID(speciesName)
         )
         if (found) return { ...found }
     }
-    return pickRandomFromPool()
+    return pickRandomFromPool(rng)
 }
 
-function generateRandomOpponent(): any {
+function generateRandomOpponent(rng: Rng): any {
     const allSpecies = dex.species
         .all()
         .filter((s: any) => s.exists && !s.isNonstandard && s.learnset)
 
-    const shuffled = allSpecies.sort(() => Math.random() - 0.5)
+    const shuffled = rng.shuffle(allSpecies)
 
     for (const species of shuffled) {
         const learnableMoves = Object.keys((species as any).learnset)
@@ -176,7 +205,7 @@ function generateRandomOpponent(): any {
         )
         if (validMoves.length < 4) continue
 
-        const shuffledMoves = validMoves.sort(() => Math.random() - 0.5)
+        const shuffledMoves = rng.shuffle(validMoves)
         const chosenMoves: string[] = []
         for (let i = 0; i < 4 && i < shuffledMoves.length; i++) {
             chosenMoves.push(shuffledMoves[i]!)
@@ -205,7 +234,7 @@ function generateRandomOpponent(): any {
         }
     }
 
-    return pickRandomFromPool()
+    return pickRandomFromPool(rng)
 }
 
 function handleInit(msg: any) {
@@ -232,11 +261,13 @@ function handleInit(msg: any) {
         dex.species.speciesCache.delete(aiSpeciesId)
     }
 
+    const rng = new Rng(msg.seed ?? undefined)
+
     let opponentSet: any
     if (opponentCfg.type === 'hardcoded') {
-        opponentSet = pickOpponentFromPool(opponentCfg.species || null)
+        opponentSet = pickOpponentFromPool(opponentCfg.species || null, rng)
     } else {
-        opponentSet = generateRandomOpponent()
+        opponentSet = generateRandomOpponent(rng)
     }
 
     const aiSet = {

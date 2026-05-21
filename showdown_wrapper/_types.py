@@ -67,3 +67,4 @@ class BattleConfig:
     ai: AIConfig
     opponent: OpponentConfig
     move_selector: MoveSelector = field(kw_only=True)
+    seed: int | None = None

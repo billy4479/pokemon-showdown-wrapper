@@ -64,6 +64,7 @@ class ShowdownPool:
                         cfg.ai,
                         cfg.opponent,
                         cfg.move_selector,
+                        seed=cfg.seed,
                     )
                 except Exception as e:
                     errors[i] = e

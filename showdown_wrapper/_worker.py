@@ -75,12 +75,13 @@ class ShowdownWorker:
         ai: AIConfig,
         opponent: OpponentConfig,
         move_selector: MoveSelector,
+        seed: int | None = None,
     ) -> BattleResult:
         if not self._started or self._closed:
             raise WorkerNotReady("Worker must be started before running battles")
 
         with self._battle_lock:
-            coro = self._run_battle_async(ai, opponent, move_selector)
+            coro = self._run_battle_async(ai, opponent, move_selector, seed)
             future = asyncio.run_coroutine_threadsafe(coro, self._loop)
             return future.result()
 
@@ -173,8 +174,12 @@ class ShowdownWorker:
         ai: AIConfig,
         opponent: OpponentConfig,
         move_selector: MoveSelector,
+        seed: int | None = None,
     ) -> BattleResult:
-        await self._send({"type": "init", "ai": ai, "opponent": opponent})
+        init_msg: dict[str, object] = {"type": "init", "ai": ai, "opponent": opponent}
+        if seed is not None:
+            init_msg["seed"] = seed
+        await self._send(init_msg)
 
         msg = await self._read_message()
         if msg["type"] != "battle_start":

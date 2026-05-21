@@ -4,7 +4,7 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "check": "tsc --no-emit",
+        "check": "tsc --noEmit",
         "watch": "tsc --watch",
         "build": "tsc",
         "fmt": "prettier -w ."
