@@ -81,46 +81,84 @@ function getActivePokemon(sideIndex: number) {
 }
 
 function getSideState(sideIndex: number) {
-    const pokemon = getActivePokemon(sideIndex)
+    const side = battle.sides[sideIndex]
+    const pokemon = side?.active[0] || null
     if (!pokemon || pokemon.fainted) return null
-    return {
+
+    const boosts = { ...pokemon.boosts }
+
+    const result: any = {
         slots: pokemon.moveSlots.map((slot: any) => ({
             id: slot.id,
             pp: slot.pp,
             maxpp: slot.maxpp,
             disabled: !!slot.disabled,
         })),
+        pokemon: {
+            species: pokemon.species.name,
+            types: pokemon.types,
+            hp: pokemon.hp,
+            maxhp: pokemon.maxhp,
+            status: pokemon.status || '',
+            ability: pokemon.ability,
+            item: pokemon.item,
+            boosts: {
+                atk: boosts.atk || 0,
+                def: boosts.def || 0,
+                spa: boosts.spa || 0,
+                spd: boosts.spd || 0,
+                spe: boosts.spe || 0,
+                accuracy: boosts.accuracy || 0,
+                evasion: boosts.evasion || 0,
+            },
+            fainted: !!pokemon.fainted,
+            speed: pokemon.speed,
+            level: pokemon.level,
+        },
+        side_conditions: Object.fromEntries(
+            Object.entries(side.sideConditions).map(([key, state]: [string, any]) => [
+                key,
+                state.layers ?? state.duration ?? 1,
+            ])
+        ),
+        pokemon_left: side.pokemonLeft,
+        weather: battle.field.weather,
+        terrain: battle.field.terrain,
+        turn: battle.turn,
     }
+
+    if (pokemon.terastallized) {
+        result.pokemon.terastallized = pokemon.terastallized
+    }
+
+    return result
 }
 
 function getBattleStartInfo() {
     const p0 = battle.sides[0].active[0]
     const p1 = battle.sides[1].active[0]
+    const makeInfo = (p: any) => ({
+        species: p.name,
+        types: p.types,
+        stats: {
+            hp: p.maxhp,
+            atk: p.baseStoredStats.atk,
+            def: p.baseStoredStats.def,
+            spa: p.baseStoredStats.spa,
+            spd: p.baseStoredStats.spd,
+            spe: p.baseStoredStats.spe,
+        },
+        ability: p.ability,
+        item: p.item,
+        hp: p.hp,
+        maxhp: p.maxhp,
+        level: p.level,
+        status: p.status || '',
+        ...(p.terastallized ? { terastallized: p.terastallized } : {}),
+    })
     return {
-        player_0: {
-            species: p0.name,
-            types: p0.types,
-            stats: {
-                hp: p0.maxhp,
-                atk: p0.baseStoredStats.atk,
-                def: p0.baseStoredStats.def,
-                spa: p0.baseStoredStats.spa,
-                spd: p0.baseStoredStats.spd,
-                spe: p0.baseStoredStats.spe,
-            },
-        },
-        opponent: {
-            species: p1.name,
-            types: p1.types,
-            stats: {
-                hp: p1.maxhp,
-                atk: p1.baseStoredStats.atk,
-                def: p1.baseStoredStats.def,
-                spa: p1.baseStoredStats.spa,
-                spd: p1.baseStoredStats.spd,
-                spe: p1.baseStoredStats.spe,
-            },
-        },
+        player_0: makeInfo(p0),
+        opponent: makeInfo(p1),
     }
 }
 

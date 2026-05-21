@@ -9,9 +9,11 @@ from showdown_wrapper._errors import (
 from showdown_wrapper._pool import ShowdownPool
 from showdown_wrapper._types import (
     AIConfig,
+    ActivePokemonInfo,
     BattleConfig,
     BattleResult,
     BattleStart,
+    Boosts,
     MoveSelector,
     OpponentConfig,
     OpponentHardcoded,
@@ -23,10 +25,12 @@ from showdown_wrapper._types import (
 from showdown_wrapper._worker import ShowdownWorker
 
 __all__ = [
+    "ActivePokemonInfo",
     "AIConfig",
     "BattleConfig",
     "BattleResult",
     "BattleStart",
+    "Boosts",
     "MoveSelector",
     "OpponentConfig",
     "OpponentHardcoded",

@@ -192,12 +192,21 @@ class ShowdownWorker:
         loop = asyncio.get_running_loop()
 
         while True:
-            p0 = PlayerState(
-                player=0, slots=state0["request"]["slots"]
-            )
-            p1 = PlayerState(
-                player=1, slots=state1["request"]["slots"]
-            )
+            def _parse_player_state(msg: dict, player_id: int) -> PlayerState:
+                req = msg["request"]
+                return PlayerState(
+                    player=player_id,
+                    slots=req.get("slots", []),
+                    pokemon=req.get("pokemon"),
+                    side_conditions=req.get("side_conditions", {}),
+                    pokemon_left=req.get("pokemon_left", 0),
+                    weather=req.get("weather", ""),
+                    terrain=req.get("terrain", ""),
+                    turn=req.get("turn", 0),
+                )
+
+            p0 = _parse_player_state(state0, 0)
+            p1 = _parse_player_state(state1, 1)
 
             slots0, slots1 = await loop.run_in_executor(
                 None, move_selector, p0, p1
