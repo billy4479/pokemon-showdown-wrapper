@@ -13,9 +13,11 @@ class ShowdownPool:
         command: str | list[str] | None = None,
         *,
         max_size: int = 4,
+        debug: bool = False,
     ) -> None:
         self._command = command
-        self._max_size = max_size
+        self._max_size = 1 if debug else max_size
+        self._debug = debug
         self._workers: list[ShowdownWorker] = []
         self._started = False
 
@@ -26,7 +28,7 @@ class ShowdownPool:
             return
         cmd = resolve_command(self._command)
         n = max(1, self._max_size)
-        self._workers = [ShowdownWorker(cmd) for _ in range(n)]
+        self._workers = [ShowdownWorker(cmd, debug=self._debug) for _ in range(n)]
         for w in self._workers:
             w.start()
         self._started = True

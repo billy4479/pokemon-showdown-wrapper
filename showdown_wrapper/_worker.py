@@ -27,8 +27,9 @@ def _run_forever(loop: asyncio.AbstractEventLoop) -> None:
 
 
 class ShowdownWorker:
-    def __init__(self, command: str | list[str] | None = None) -> None:
+    def __init__(self, command: str | list[str] | None = None, *, debug: bool = False) -> None:
         self._command = resolve_command(command)
+        self._debug = debug
 
         self._loop = asyncio.new_event_loop()
         self._thread = threading.Thread(
@@ -145,6 +146,8 @@ class ShowdownWorker:
 
     async def _send(self, msg: dict) -> None:
         data = (json.dumps(msg) + "\n").encode()
+        if self._debug:
+            print(f">>> {data.decode().strip()}", flush=True)
         self._proc.stdin.write(data)
         await self._proc.stdin.drain()
 
@@ -152,6 +155,8 @@ class ShowdownWorker:
         msg = await asyncio.wait_for(self._msg_queue.get(), timeout=60)
         if msg is None:
             raise WorkerCrashed("Process exited unexpectedly")
+        if self._debug:
+            print(f"<<< {json.dumps(msg)}", flush=True)
         if msg.get("type") == "error":
             raise ProtocolError(f"Wrapper error: {msg.get('message', '')}")
         return msg
