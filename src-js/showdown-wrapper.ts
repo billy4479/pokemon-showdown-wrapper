@@ -109,6 +109,14 @@ function getSideState(sideIndex: number) {
             fainted: !!pokemon.fainted,
             speed: pokemon.speed,
             level: pokemon.level,
+            volatiles: Object.fromEntries(
+                Object.entries(pokemon.volatiles || {}).map(
+                    ([key, state]: [string, any]) => [
+                        key,
+                        state.layers ?? state.duration ?? 1,
+                    ],
+                ),
+            ),
         },
         side_conditions: Object.fromEntries(
             Object.entries(side.sideConditions).map(

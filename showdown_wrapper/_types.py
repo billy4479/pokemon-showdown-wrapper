@@ -28,6 +28,7 @@ class ActivePokemonInfo(TypedDict):
     speed: int
     level: int
     terastallized: NotRequired[str]
+    volatiles: NotRequired[dict[str, int]]
 
 
 class AIConfig(TypedDict):
