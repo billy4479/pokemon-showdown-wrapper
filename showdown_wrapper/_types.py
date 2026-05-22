@@ -79,6 +79,18 @@ class PlayerState:
     terrain: str = ""
     turn: int = 0
 
+    def to_dict(self) -> dict:
+        return {
+            "player": self.player,
+            "slots": [dict(s) for s in self.slots],
+            "pokemon": dict(self.pokemon) if self.pokemon else None,
+            "side_conditions": dict(self.side_conditions),
+            "pokemon_left": self.pokemon_left,
+            "weather": self.weather,
+            "terrain": self.terrain,
+            "turn": self.turn,
+        }
+
     def __str__(self) -> str:
         lines = []
         lines.append(f"PlayerState(player={self.player})")
