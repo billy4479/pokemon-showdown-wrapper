@@ -91,6 +91,19 @@ class PlayerState:
             "turn": self.turn,
         }
 
+    @classmethod
+    def from_dict(cls, d: dict) -> "PlayerState":
+        return cls(
+            player=d["player"],
+            slots=[MoveSlot(**s) for s in d["slots"]],
+            pokemon=ActivePokemonInfo(**d["pokemon"]) if d.get("pokemon") else None,
+            side_conditions=dict(d.get("side_conditions", {})),
+            pokemon_left=d.get("pokemon_left", 0),
+            weather=d.get("weather", ""),
+            terrain=d.get("terrain", ""),
+            turn=d.get("turn", 0),
+        )
+
     def __str__(self) -> str:
         lines = []
         lines.append(f"PlayerState(player={self.player})")
