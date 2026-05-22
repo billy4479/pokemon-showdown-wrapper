@@ -27,6 +27,7 @@ class ActivePokemonInfo(TypedDict):
     fainted: bool
     speed: int
     level: int
+    stats: Stats
     terastallized: NotRequired[str]
     volatiles: NotRequired[dict[str, int]]
 

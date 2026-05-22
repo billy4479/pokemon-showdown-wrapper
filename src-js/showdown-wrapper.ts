@@ -109,6 +109,14 @@ function getSideState(sideIndex: number) {
             fainted: !!pokemon.fainted,
             speed: pokemon.speed,
             level: pokemon.level,
+            stats: {
+                hp: pokemon.maxhp,
+                atk: pokemon.baseStoredStats.atk,
+                def: pokemon.baseStoredStats.def,
+                spa: pokemon.baseStoredStats.spa,
+                spd: pokemon.baseStoredStats.spd,
+                spe: pokemon.baseStoredStats.spe,
+            },
             volatiles: Object.fromEntries(
                 Object.entries(pokemon.volatiles || {}).map(
                     ([key, state]: [string, any]) => [
