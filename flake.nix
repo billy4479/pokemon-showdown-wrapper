@@ -77,6 +77,7 @@
           postPatch = ''
             cat > showdown_wrapper/_build_data.py <<EOF
             DEFAULT_WORKER_PATH = "${showdownJsWorker}/bin/showdown-wrapper"
+            DEFAULT_LIST_ALLOWED_MOVES_PATH = "${showdownJsWorker}/bin/list-allowed-moves"
             EOF
           '';
 

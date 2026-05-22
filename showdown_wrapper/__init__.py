@@ -1,3 +1,4 @@
+from showdown_wrapper._allowed_moves import list_allowed_moves
 from showdown_wrapper._errors import (
     PoolNotStarted,
     PoolShutdown,
@@ -31,6 +32,7 @@ __all__ = [
     "BattleResult",
     "BattleStart",
     "Boosts",
+    "list_allowed_moves",
     "MoveSelector",
     "OpponentConfig",
     "OpponentHardcoded",
