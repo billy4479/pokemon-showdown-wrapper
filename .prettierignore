@@ -2,3 +2,6 @@
 /.direnv
 /node_modules
 /result
+
+*.yaml
+package.json

@@ -1,38 +1,38 @@
 {
-    "name": "pokemon-showdown-wrapper",
-    "version": "1.0.0",
-    "description": "",
-    "main": "index.js",
-    "scripts": {
-        "check": "tsc --noEmit",
-        "watch": "tsc --watch",
-        "build": "tsc",
-        "fmt": "prettier -w ."
-    },
-    "keywords": [],
-    "author": "",
-    "license": "MIT",
-    "devEngines": {
-        "packageManager": {
-            "name": "pnpm",
-            "version": "^11.1.1",
-            "onFail": "download"
-        }
-    },
-    "type": "module",
-    "dependencies": {
-        "pokemon-showdown": "^0.11.10"
-    },
-    "devDependencies": {
-        "@types/node": "^25.9.1",
-        "prettier": "^3.8.3",
-        "tsx": "^4.22.3",
-        "typescript": "^6.0.3"
-    },
-    "prettier": {
-        "trailingComma": "es5",
-        "tabWidth": 4,
-        "semi": false,
-        "singleQuote": true
+  "name": "pokemon-showdown-wrapper",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "watch": "tsc --watch",
+    "build": "tsc",
+    "fmt": "prettier -w ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "^11.1.1",
+      "onFail": "download"
     }
+  },
+  "type": "module",
+  "dependencies": {
+    "pokemon-showdown": "^0.11.10"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "prettier": "^3.8.3",
+    "tsx": "^4.22.3",
+    "typescript": "^6.0.3"
+  },
+  "prettier": {
+    "trailingComma": "all",
+    "tabWidth": 4,
+    "semi": true,
+    "singleQuote": false
+  }
 }

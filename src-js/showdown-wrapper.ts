@@ -1,72 +1,66 @@
-import pkm from 'pokemon-showdown'
-import { hardcodedOpponents } from './opponent-pool.js'
-import * as readline from 'node:readline'
+import pkm from "pokemon-showdown";
+import { hardcodedOpponents } from "./opponent-pool.js";
+import * as readline from "node:readline";
+import { customRules } from "./custom-rules.js";
 
-const { Dex, toID } = pkm
+const { Dex, toID } = pkm;
 
-const dex = Dex.mod('gen9').includeData()
-
-const BATTLE_RULES = [
-    'Terastal Clause',
-    'Freeze Clause Mod',
-    'Endless Battle Clause',
-    'Exact HP Mod',
-    '- All Abilities',
-    '+ No Ability',
-]
+const dex = Dex.mod("gen9").includeData();
 
 const battleFormatName = dex.formats.validate(
-    'gen9customgame@@@' + BATTLE_RULES.join(',')
-)
+    "gen9customgame@@@" + customRules,
+);
+const battleFormat = dex.formats.get(battleFormatName, true);
+const ruleTable = dex.formats.getRuleTable(battleFormat);
 
-let battle: any = null
-let pendingChoices: [number[] | null, number[] | null] = [null, null]
+let battle: any = null;
+let pendingChoices: [number[] | null, number[] | null] = [null, null];
 
 function send(msg: any) {
-    process.stdout.write(JSON.stringify(msg) + '\n')
+    process.stdout.write(JSON.stringify(msg) + "\n");
 }
 
 class Rng {
-    private s: number
+    private s: number;
 
     constructor(seed?: number) {
         if (seed === undefined) {
-            seed = Math.floor(Math.random() * 2147483647)
+            seed = Math.floor(Math.random() * 2147483647);
         }
-        this.s = seed | 0
+        this.s = seed | 0;
     }
 
     random(): number {
-        this.s = (this.s + 0x6d2b79f5) | 0
-        let t = Math.imul(this.s ^ (this.s >>> 15), 1 | this.s)
-        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
-        return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+        this.s = (this.s + 0x6d2b79f5) | 0;
+        let t = Math.imul(this.s ^ (this.s >>> 15), 1 | this.s);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     }
 
     shuffle<T>(arr: T[]): T[] {
-        const result = [...arr]
+        const result = [...arr];
         for (let i = result.length - 1; i > 0; i--) {
-            const j = Math.floor(this.random() * (i + 1))
-            const tmp = result[j]!
-            result[j] = result[i]!
-            result[i] = tmp
+            const j = Math.floor(this.random() * (i + 1));
+            const tmp = result[j]!;
+            result[j] = result[i]!;
+            result[i] = tmp;
         }
-        return result
+        return result;
     }
 }
 
 function computeBaseStats(desired: {
-    hp: number
-    atk: number
-    def: number
-    spa: number
-    spd: number
-    spe: number
+    hp: number;
+    atk: number;
+    def: number;
+    spa: number;
+    spd: number;
+    spe: number;
 }) {
     const toBase = (final: number, offset: number) => {
-        const base = Math.round((final - offset) / 2)
-        return Math.max(1, Math.min(255, base))
-    }
+        const base = Math.round((final - offset) / 2);
+        return Math.max(1, Math.min(255, base));
+    };
     return {
         hp: toBase(desired.hp, 141),
         atk: toBase(desired.atk, 36),
@@ -74,20 +68,20 @@ function computeBaseStats(desired: {
         spa: toBase(desired.spa, 36),
         spd: toBase(desired.spd, 36),
         spe: toBase(desired.spe, 36),
-    }
+    };
 }
 
 function getActivePokemon(sideIndex: number) {
-    const side = battle.sides[sideIndex]
-    return side?.active[0] || null
+    const side = battle.sides[sideIndex];
+    return side?.active[0] || null;
 }
 
 function getSideState(sideIndex: number) {
-    const side = battle.sides[sideIndex]
-    const pokemon = side?.active[0] || null
-    if (!pokemon || pokemon.fainted) return null
+    const side = battle.sides[sideIndex];
+    const pokemon = side?.active[0] || null;
+    if (!pokemon || pokemon.fainted) return null;
 
-    const boosts = { ...pokemon.boosts }
+    const boosts = { ...pokemon.boosts };
 
     const result: any = {
         slots: pokemon.moveSlots.map((slot: any) => ({
@@ -101,7 +95,7 @@ function getSideState(sideIndex: number) {
             types: pokemon.types,
             hp: pokemon.hp,
             maxhp: pokemon.maxhp,
-            status: pokemon.status || '',
+            status: pokemon.status || "",
             item: pokemon.item,
             boosts: {
                 atk: boosts.atk || 0,
@@ -117,27 +111,29 @@ function getSideState(sideIndex: number) {
             level: pokemon.level,
         },
         side_conditions: Object.fromEntries(
-            Object.entries(side.sideConditions).map(([key, state]: [string, any]) => [
-                key,
-                state.layers ?? state.duration ?? 1,
-            ])
+            Object.entries(side.sideConditions).map(
+                ([key, state]: [string, any]) => [
+                    key,
+                    state.layers ?? state.duration ?? 1,
+                ],
+            ),
         ),
         pokemon_left: side.pokemonLeft,
         weather: battle.field.weather,
         terrain: battle.field.terrain,
         turn: battle.turn,
-    }
+    };
 
     if (pokemon.terastallized) {
-        result.pokemon.terastallized = pokemon.terastallized
+        result.pokemon.terastallized = pokemon.terastallized;
     }
 
-    return result
+    return result;
 }
 
 function getBattleStartInfo() {
-    const p0 = battle.sides[0].active[0]
-    const p1 = battle.sides[1].active[0]
+    const p0 = battle.sides[0].active[0];
+    const p1 = battle.sides[1].active[0];
     const makeInfo = (p: any) => ({
         species: p.name,
         types: p.types,
@@ -153,211 +149,213 @@ function getBattleStartInfo() {
         hp: p.hp,
         maxhp: p.maxhp,
         level: p.level,
-        status: p.status || '',
+        status: p.status || "",
         ...(p.terastallized ? { terastallized: p.terastallized } : {}),
-    })
+    });
     return {
         player_0: makeInfo(p0),
         opponent: makeInfo(p1),
-    }
+    };
 }
 
 function sendStateFor(sideIndex: number) {
-    const state = getSideState(sideIndex)
+    const state = getSideState(sideIndex);
     if (state) {
-        send({ type: 'state', request: { player: sideIndex, ...state } })
+        send({ type: "state", request: { player: sideIndex, ...state } });
     }
 }
 
 function sendEnd() {
-    const p0 = getActivePokemon(0)
-    const p1 = getActivePokemon(1)
+    const p0 = getActivePokemon(0);
+    const p1 = getActivePokemon(1);
     const winner =
-        battle.winner === battle.sides[0].name ? 'player_0' : 'player_1'
+        battle.winner === battle.sides[0].name ? "player_0" : "player_1";
     send({
-        type: 'end',
+        type: "end",
         winner,
         player_hp: p0 ? p0.hp : 0,
         opponent_hp: p1 ? p1.hp : 0,
         turns: battle.turn,
-    })
+    });
 }
 
 function processTurn() {
-    if (pendingChoices[0] === null || pendingChoices[1] === null) return
+    if (pendingChoices[0] === null || pendingChoices[1] === null) return;
 
-    const aiSlots = pendingChoices[0]!
-    const opponentSlots = pendingChoices[1]!
-    pendingChoices = [null, null]
+    const aiSlots = pendingChoices[0]!;
+    const opponentSlots = pendingChoices[1]!;
+    pendingChoices = [null, null];
 
-    const aiMove = aiSlots.length > 0 ? `move ${aiSlots[0]! + 1}` : ''
+    const aiMove = aiSlots.length > 0 ? `move ${aiSlots[0]! + 1}` : "";
     const opponentMove =
-        opponentSlots.length > 0 ? `move ${opponentSlots[0]! + 1}` : ''
+        opponentSlots.length > 0 ? `move ${opponentSlots[0]! + 1}` : "";
 
-    if (!aiMove && !opponentMove) return
+    if (!aiMove && !opponentMove) return;
 
     try {
-        battle.makeChoices(aiMove, opponentMove)
+        battle.makeChoices(aiMove, opponentMove);
     } catch {
-        sendStateFor(0)
-        sendStateFor(1)
-        return
+        sendStateFor(0);
+        sendStateFor(1);
+        return;
     }
 
     if (battle.ended) {
-        sendEnd()
-        return
+        sendEnd();
+        return;
     }
 
-    sendStateFor(0)
-    sendStateFor(1)
+    sendStateFor(0);
+    sendStateFor(1);
 }
 
 function pickRandomFromPool(rng: Rng) {
-    const idx = Math.floor(rng.random() * hardcodedOpponents.length)
-    return { ...hardcodedOpponents[idx] }
+    const idx = Math.floor(rng.random() * hardcodedOpponents.length);
+    return { ...hardcodedOpponents[idx] };
 }
 
 function pickOpponentFromPool(speciesName: string | null, rng: Rng) {
     if (speciesName) {
         const found = hardcodedOpponents.find(
-            (o) => toID(o.species) === toID(speciesName)
-        )
-        if (found) return { ...found }
+            (o) => toID(o.species) === toID(speciesName),
+        );
+        if (found) return { ...found };
     }
-    return pickRandomFromPool(rng)
+    return pickRandomFromPool(rng);
 }
 
 function generateRandomOpponent(rng: Rng): any {
     const allSpecies = dex.species
         .all()
-        .filter((s: any) => s.exists && !s.isNonstandard && s.learnset)
+        .filter((s: any) => s.exists && !s.isNonstandard && s.learnset);
 
-    const shuffled = rng.shuffle(allSpecies)
+    const shuffled = rng.shuffle(allSpecies);
 
     for (const species of shuffled) {
-        const learnableMoves = Object.keys((species as any).learnset)
-        const validMoves = learnableMoves.filter(
-            (m: string) =>
-                dex.moves.get(m).exists && !dex.moves.get(m).isNonstandard
-        )
-        if (validMoves.length < 4) continue
+        const learnableMoves = Object.keys((species as any).learnset);
+        const validMoves = learnableMoves.filter((m: string) => {
+            const move = dex.moves.get(m);
+            if (!move.exists || move.isNonstandard) return false;
+            if (ruleTable.check("move:" + move.id)) return false;
+            return true;
+        });
+        if (validMoves.length < 4) continue;
 
-        const shuffledMoves = rng.shuffle(validMoves)
-        const chosenMoves: string[] = []
+        const shuffledMoves = rng.shuffle(validMoves);
+        const chosenMoves: string[] = [];
         for (let i = 0; i < 4 && i < shuffledMoves.length; i++) {
-            chosenMoves.push(shuffledMoves[i]!)
+            chosenMoves.push(shuffledMoves[i]!);
         }
 
         return {
             name: species.name,
             species: species.name,
-            item: '',
-            ability: '',
+            item: "",
+            ability: "",
             moves: chosenMoves,
-            nature: 'Hardy',
-            gender: species.gender || 'M',
+            nature: "Hardy",
+            gender: species.gender || "M",
             evs: { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
             ivs: { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 },
             level: 100,
-        }
+        };
     }
 
-    return pickRandomFromPool(rng)
+    return pickRandomFromPool(rng);
 }
 
 function handleInit(msg: any) {
-    const ai = msg.ai
-    const opponentCfg = msg.opponent
+    const ai = msg.ai;
+    const opponentCfg = msg.opponent;
 
-    const aiSpeciesId = 'aipokemon'
-    const aiDisplayName = ai.species || 'AI'
-    const computedBaseStats = computeBaseStats(ai.stats)
+    const aiSpeciesId = "aipokemon";
+    const aiDisplayName = ai.species || "AI";
+    const computedBaseStats = computeBaseStats(ai.stats);
 
     dex.data.Pokedex[aiSpeciesId] = {
         name: aiDisplayName,
         types: ai.types,
         baseStats: computedBaseStats,
-        abilities: { 0: '' },
+        abilities: { 0: "" },
         weightkg: 0,
         num: 0,
-        color: '',
+        color: "",
         eggGroups: [] as string[],
         evos: [] as string[],
-    }
-    dex.data.FormatsData[aiSpeciesId] = {}
+    };
+    dex.data.FormatsData[aiSpeciesId] = {};
     if (dex.species.speciesCache.has(aiSpeciesId)) {
-        dex.species.speciesCache.delete(aiSpeciesId)
+        dex.species.speciesCache.delete(aiSpeciesId);
     }
 
-    const rng = new Rng(msg.seed ?? undefined)
+    const rng = new Rng(msg.seed ?? undefined);
 
-    let opponentSet: any
-    if (opponentCfg.type === 'hardcoded') {
-        opponentSet = pickOpponentFromPool(opponentCfg.species || null, rng)
+    let opponentSet: any;
+    if (opponentCfg.type === "hardcoded") {
+        opponentSet = pickOpponentFromPool(opponentCfg.species || null, rng);
     } else {
-        opponentSet = generateRandomOpponent(rng)
+        opponentSet = generateRandomOpponent(rng);
     }
 
     const aiSet = {
         name: aiDisplayName,
         species: aiSpeciesId,
-        item: '',
-        ability: '',
+        item: "",
+        ability: "",
         moves: ai.moves,
-        nature: 'Hardy',
-        gender: 'N',
+        nature: "Hardy",
+        gender: "N",
         evs: { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
         ivs: { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 },
         level: 100,
-    }
+    };
 
-    const Battle = (pkm as any).Battle
+    const Battle = (pkm as any).Battle;
     battle = new Battle({
         formatid: battleFormatName,
         send: () => {},
-        p1: { name: 'Player 1', team: [aiSet] },
-        p2: { name: 'Player 2', team: [opponentSet] },
-    })
+        p1: { name: "Player 1", team: [aiSet] },
+        p2: { name: "Player 2", team: [opponentSet] },
+    });
 
-    if (battle.requestState === 'teampreview') {
-        battle.makeChoices('team 1', 'team 1')
+    if (battle.requestState === "teampreview") {
+        battle.makeChoices("team 1", "team 1");
     }
 
-    pendingChoices = [null, null]
+    pendingChoices = [null, null];
 
-    send({ type: 'battle_start', ...getBattleStartInfo() })
-    sendStateFor(0)
-    sendStateFor(1)
+    send({ type: "battle_start", ...getBattleStartInfo() });
+    sendStateFor(0);
+    sendStateFor(1);
 }
 
 function handleChoice(msg: any) {
-    if (!battle || battle.ended) return
+    if (!battle || battle.ended) return;
 
-    const player = Number(msg.player)
-    if (player !== 0 && player !== 1) return
+    const player = Number(msg.player);
+    if (player !== 0 && player !== 1) return;
 
-    pendingChoices[player] = msg.slots || []
+    pendingChoices[player] = msg.slots || [];
 
-    processTurn()
+    processTurn();
 }
 
 function main() {
-    send({ type: 'ready' })
+    send({ type: "ready" });
 
-    const rl = readline.createInterface({ input: process.stdin })
-    rl.on('line', (line: string) => {
+    const rl = readline.createInterface({ input: process.stdin });
+    rl.on("line", (line: string) => {
         try {
-            const msg = JSON.parse(line)
-            if (msg.type === 'init') {
-                handleInit(msg)
-            } else if (msg.type === 'choice') {
-                handleChoice(msg)
+            const msg = JSON.parse(line);
+            if (msg.type === "init") {
+                handleInit(msg);
+            } else if (msg.type === "choice") {
+                handleChoice(msg);
             }
         } catch (e: any) {
-            send({ type: 'error', message: e.message })
+            send({ type: "error", message: e.message });
         }
-    })
+    });
 }
 
-main()
+main();
