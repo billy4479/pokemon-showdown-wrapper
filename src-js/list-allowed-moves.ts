@@ -5,7 +5,9 @@ const { Dex } = pkm;
 
 const dex = Dex.mod("gen9").includeData();
 
-const formatName = dex.formats.validate("gen9anythinggoes@@@" + customRules);
+const formatName = dex.formats.validate(
+    "gen9anythinggoes@@@" + customRules(false),
+);
 
 const ruleTable = dex.formats.getRuleTable(dex.formats.get(formatName, true));
 

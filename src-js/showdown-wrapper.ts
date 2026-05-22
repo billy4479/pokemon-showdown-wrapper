@@ -8,7 +8,7 @@ const { Dex, toID } = pkm;
 const dex = Dex.mod("gen9").includeData();
 
 const battleFormatName = dex.formats.validate(
-    "gen9customgame@@@" + customRules,
+    "gen9customgame@@@" + customRules(true),
 );
 const battleFormat = dex.formats.get(battleFormatName, true);
 const ruleTable = dex.formats.getRuleTable(battleFormat);
