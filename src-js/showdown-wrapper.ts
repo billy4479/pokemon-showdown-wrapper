@@ -1,5 +1,4 @@
 import pkm from "pokemon-showdown";
-import { hardcodedOpponents } from "./opponent-pool.js";
 import * as readline from "node:readline";
 import { customRules } from "./custom-rules.js";
 
@@ -225,30 +224,17 @@ function processTurn() {
     sendStateFor(1);
 }
 
-function pickRandomFromPool(rng: Rng) {
-    const idx = Math.floor(rng.random() * hardcodedOpponents.length);
-    return { ...hardcodedOpponents[idx] };
-}
-
-function pickOpponentFromPool(speciesName: string | null, rng: Rng) {
-    if (speciesName) {
-        const found = hardcodedOpponents.find(
-            (o) => toID(o.species) === toID(speciesName),
-        );
-        if (found) return { ...found };
-    }
-    return pickRandomFromPool(rng);
-}
-
-function generateRandomOpponent(rng: Rng): any {
+function generateRandomOpponent(rng: Rng): any | null {
     const allSpecies = dex.species
         .all()
-        .filter((s: any) => s.exists && !s.isNonstandard && s.learnset);
+        .filter((s: any) => s.exists && !s.isNonstandard);
 
     const shuffled = rng.shuffle(allSpecies);
 
     for (const species of shuffled) {
-        const learnableMoves = Object.keys((species as any).learnset);
+        const learnsetData = dex.data.Learnsets?.[species.id]?.learnset;
+        if (!learnsetData) continue;
+        const learnableMoves = Object.keys(learnsetData);
         const validMoves = learnableMoves.filter((m: string) => {
             const move = dex.moves.get(m);
             if (!move.exists || move.isNonstandard) return false;
@@ -277,7 +263,73 @@ function generateRandomOpponent(rng: Rng): any {
         };
     }
 
-    return pickRandomFromPool(rng);
+    send({ type: "error", message: "No valid random opponent could be generated" });
+    return null;
+}
+
+function buildSpecifiedOpponent(cfg: any): any | null {
+    const speciesId = toID(cfg.species);
+    if (!speciesId) {
+        send({ type: "error", message: "No species specified" });
+        return null;
+    }
+
+    const species = dex.species.get(speciesId);
+    if (!species.exists) {
+        send({ type: "error", message: `Species '${cfg.species}' not found` });
+        return null;
+    }
+
+    if (!cfg.moves || !Array.isArray(cfg.moves) || cfg.moves.length === 0) {
+        send({ type: "error", message: "At least one move must be specified" });
+        return null;
+    }
+
+    const moveIds = cfg.moves.map((m: string) => toID(m));
+
+    if (new Set(moveIds).size !== moveIds.length) {
+        send({ type: "error", message: "Duplicate moves are not allowed" });
+        return null;
+    }
+
+    const learnsetData: Record<string, any> | undefined = dex.data.Learnsets?.[species.id]?.learnset;
+    if (!learnsetData) {
+        send({ type: "error", message: `No learnset data for '${species.name}'` });
+        return null;
+    }
+
+    for (const moveId of moveIds) {
+        const move = dex.moves.get(moveId);
+        if (!move.exists) {
+            send({ type: "error", message: `Move '${moveId}' not found` });
+            return null;
+        }
+        if (move.isNonstandard) {
+            send({ type: "error", message: `Move '${moveId}' is non-standard` });
+            return null;
+        }
+        if (ruleTable.check("move:" + move.id)) {
+            send({ type: "error", message: `Move '${moveId}' is banned in this format` });
+            return null;
+        }
+        if (!learnsetData[moveId]) {
+            send({ type: "error", message: `'${species.name}' cannot learn '${moveId}'` });
+            return null;
+        }
+    }
+
+    return {
+        name: species.name,
+        species: species.name,
+        item: "",
+        ability: "",
+        moves: moveIds,
+        nature: "Hardy",
+        gender: (species as any).gender || "M",
+        evs: { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
+        ivs: { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 },
+        level: 100,
+    };
 }
 
 function handleInit(msg: any) {
@@ -307,10 +359,12 @@ function handleInit(msg: any) {
     const rng = new Rng(msg.seed ?? undefined);
 
     let opponentSet: any;
-    if (opponentCfg.type === "hardcoded") {
-        opponentSet = pickOpponentFromPool(opponentCfg.species || null, rng);
+    if (opponentCfg.type === "specified") {
+        opponentSet = buildSpecifiedOpponent(opponentCfg);
+        if (!opponentSet) return;
     } else {
         opponentSet = generateRandomOpponent(rng);
+        if (!opponentSet) return;
     }
 
     const aiSet = {

@@ -26,13 +26,21 @@ ai = {
 configs = [
     BattleConfig(
         ai=ai,
-        opponent={"type": "hardcoded", "species": "Garchomp"},
+        opponent={
+            "type": "specified",
+            "species": "garchomp",
+            "moves": ["earthquake", "dragonclaw", "stoneedge", "swordsdance"],
+        },
         move_selector=first_move_ai,
         seed=seed,
     ),
     BattleConfig(
         ai=ai,
-        opponent={"type": "hardcoded"},
+        opponent={
+            "type": "specified",
+            "species": "dragapult",
+            "moves": ["dragondarts", "shadowball", "uturn", "willowisp"],
+        },
         move_selector=first_move_ai,
         seed=seed,
     ),
@@ -50,7 +58,7 @@ configs = [
     ),
 ]
 
-with ShowdownPool(max_size=1, command="./result/bin/showdown-wrapper") as pool:
+with ShowdownPool(max_size=1, command=["node", "dist/showdown-wrapper.js"]) as pool:
     results = pool.run_battles(configs)
 
 for i, r in enumerate(results):

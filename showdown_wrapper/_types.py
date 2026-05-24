@@ -39,16 +39,17 @@ class AIConfig(TypedDict):
     moves: list[str]
 
 
-class OpponentHardcoded(TypedDict):
-    type: str  # "hardcoded"
-    species: NotRequired[str | None]
-
-
 class OpponentRandom(TypedDict):
     type: str  # "random"
 
 
-OpponentConfig = OpponentHardcoded | OpponentRandom
+class OpponentSpecified(TypedDict):
+    type: str  # "specified"
+    species: str
+    moves: list[str]
+
+
+OpponentConfig = OpponentRandom | OpponentSpecified
 
 
 class PokemonInfo(TypedDict):
