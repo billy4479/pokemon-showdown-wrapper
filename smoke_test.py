@@ -66,3 +66,5 @@ for i, r in enumerate(results):
         f"Battle {i}: {r.winner} won in {r.turns} turns "
         f"(p0 HP: {r.player_hp}, p1 HP: {r.opponent_hp})"
     )
+    print(f"  P0 final state: player={r.player0.player}, turn={r.player0.turn}, pokemon_left={r.player0.pokemon_left}")
+    print(f"  P1 final state: player={r.player1.player}, turn={r.player1.turn}, pokemon_left={r.player1.pokemon_left}")

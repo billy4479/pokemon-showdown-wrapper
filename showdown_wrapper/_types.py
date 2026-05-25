@@ -143,6 +143,8 @@ class BattleResult:
     player_hp: int
     opponent_hp: int
     turns: int
+    player0: PlayerState
+    player1: PlayerState
 
 
 MoveSelector = Callable[[PlayerState, PlayerState], tuple[int, int]]

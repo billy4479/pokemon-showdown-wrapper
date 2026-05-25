@@ -232,6 +232,8 @@ class ShowdownWorker:
                     player_hp=msg["player_hp"],
                     opponent_hp=msg["opponent_hp"],
                     turns=msg["turns"],
+                    player0=p0,
+                    player1=p1,
                 )
 
             if msg["type"] != "state" or msg["request"]["player"] != 0:
