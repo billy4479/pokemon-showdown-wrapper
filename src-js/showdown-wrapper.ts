@@ -267,6 +267,8 @@ function generateRandomOpponent(rng: Rng): any | null {
             const move = dex.moves.get(m);
             if (!move.exists || move.isNonstandard) return false;
             if (ruleTable.check("move:" + move.id)) return false;
+            if (move.ohko) return false;             // OHKO Clause
+            if (move.status === 'slp') return false;  // Sleep Moves Clause
             return true;
         });
         if (validMoves.length < 4) continue;
