@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import NotRequired, TypedDict
+from typing import Any, NotRequired, TypedDict
 
 
 Stats = TypedDict("Stats", {"hp": int, "atk": int, "def": int, "spa": int, "spd": int, "spe": int})
@@ -145,6 +145,7 @@ class BattleResult:
     turns: int
     player0: PlayerState
     player1: PlayerState
+    userdata: Any = None
 
 
 MoveSelector = Callable[[PlayerState, PlayerState], tuple[int, int]]
@@ -156,3 +157,4 @@ class BattleConfig:
     opponent: OpponentConfig
     move_selector: MoveSelector = field(kw_only=True)
     seed: int | None = None
+    userdata: Any = None

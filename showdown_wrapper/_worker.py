@@ -18,6 +18,7 @@ from showdown_wrapper._types import (
     MoveSelector,
     OpponentConfig,
     PlayerState,
+    BattleConfig,
 )
 
 
@@ -77,12 +78,13 @@ class ShowdownWorker:
         opponent: OpponentConfig,
         move_selector: MoveSelector,
         seed: int | None = None,
+        userdata: Any = None,
     ) -> BattleResult:
         if not self._started or self._closed:
             raise WorkerNotReady("Worker must be started before running battles")
 
         with self._battle_lock:
-            coro = self._run_battle_async(ai, opponent, move_selector, seed)
+            coro = self._run_battle_async(ai, opponent, move_selector, seed, userdata)
             future = asyncio.run_coroutine_threadsafe(coro, self._loop)
             return future.result()
 
@@ -180,6 +182,7 @@ class ShowdownWorker:
         opponent: OpponentConfig,
         move_selector: MoveSelector,
         seed: int | None = None,
+        userdata: Any = None,
     ) -> BattleResult:
         init_msg: dict[str, object] = {"type": "init", "ai": ai, "opponent": opponent}
         if seed is not None:
@@ -234,6 +237,7 @@ class ShowdownWorker:
                     turns=msg["turns"],
                     player0=p0,
                     player1=p1,
+                    userdata=userdata,
                 )
 
             if msg["type"] != "state" or msg["request"]["player"] != 0:
