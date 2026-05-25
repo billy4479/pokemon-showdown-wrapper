@@ -139,7 +139,7 @@ class PlayerState:
 
 @dataclass(frozen=True)
 class BattleResult:
-    winner: str
+    winner: int
     player_hp: int
     opponent_hp: int
     turns: int

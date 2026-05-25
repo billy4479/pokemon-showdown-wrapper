@@ -184,7 +184,7 @@ function sendEnd() {
     const p0 = getActivePokemon(0);
     const p1 = getActivePokemon(1);
     const winner =
-        battle.winner === battle.sides[0].name ? "player_0" : "player_1";
+        battle.winner === battle.sides[0].name ? 0 : 1;
     send({
         type: "end",
         winner,
