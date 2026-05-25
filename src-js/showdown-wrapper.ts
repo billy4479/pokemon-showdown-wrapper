@@ -265,10 +265,12 @@ function generateRandomOpponent(rng: Rng): any | null {
         const learnableMoves = Object.keys(learnsetData);
         const validMoves = learnableMoves.filter((m: string) => {
             const move = dex.moves.get(m);
+            if (move.id === "???") return false;
             if (!move.exists || move.isNonstandard) return false;
             if (ruleTable.check("move:" + move.id)) return false;
-            if (move.ohko) return false;             // OHKO Clause
-            if (move.status === 'slp') return false;  // Sleep Moves Clause
+            if (ruleTable.check("pokemontag:allmoves")) return false;
+            if (move.ohko) return false;
+            if (move.status === 'slp') return false;
             return true;
         });
         if (validMoves.length < 4) continue;

@@ -1,5 +1,5 @@
-export const customRules = (needsOverrideMaxTeamSize: boolean = false) =>
-    [
+export const customRules = (needsOverrideMaxTeamSize: boolean = false) => {
+    let rules = [
         "Picked Team Size = 1",
         `${needsOverrideMaxTeamSize ? "!!" : ""} Max Team Size = 1`,
         "Min Team Size = 1",
@@ -25,4 +25,10 @@ export const customRules = (needsOverrideMaxTeamSize: boolean = false) =>
 
         "-All Abilities",
         "+No Ability",
-    ].join(",");
+    ];
+
+    if (needsOverrideMaxTeamSize)
+        rules = rules.concat(["Obtainable", "Min Source Gen = 9"]);
+
+    return rules.join(",");
+};
