@@ -180,11 +180,12 @@ function sendStateFor(sideIndex: number) {
     }
 }
 
-function sendEnd() {
+function sendEnd(winnerOverride?: number) {
     const p0 = getActivePokemon(0);
     const p1 = getActivePokemon(1);
     const winner =
-        battle.winner === battle.sides[0].name ? 0 : 1;
+        winnerOverride ??
+        (battle.winner === battle.sides[0].name ? 0 : 1);
     send({
         type: "end",
         winner,
@@ -192,6 +193,19 @@ function sendEnd() {
         opponent_hp: p1 ? p1.hp : 0,
         turns: battle.turn,
     });
+}
+
+function validateChoice(sideIndex: number, slots: number[]): boolean {
+    if (slots.length === 0) return true;
+    const pokemon = battle.sides[sideIndex].active[0];
+    if (!pokemon || pokemon.fainted) return false;
+    for (const slot of slots) {
+        if (slot < 0 || slot >= pokemon.moveSlots.length) return false;
+        const moveSlot = pokemon.moveSlots[slot];
+        if (moveSlot.disabled) return false;
+        if (moveSlot.pp <= 0) return false;
+    }
+    return true;
 }
 
 function processTurn() {
@@ -207,11 +221,25 @@ function processTurn() {
 
     if (!aiMove && !opponentMove) return;
 
+    if (!validateChoice(0, aiSlots)) {
+        sendEnd(1);
+        return;
+    }
+    if (!validateChoice(1, opponentSlots)) {
+        sendEnd(0);
+        return;
+    }
+
     try {
         battle.makeChoices(aiMove, opponentMove);
     } catch {
-        sendStateFor(0);
-        sendStateFor(1);
+        if (!validateChoice(0, aiSlots)) {
+            sendEnd(1);
+        } else if (!validateChoice(1, opponentSlots)) {
+            sendEnd(0);
+        } else {
+            sendEnd(1);
+        }
         return;
     }
 

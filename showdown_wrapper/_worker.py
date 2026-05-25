@@ -251,8 +251,14 @@ class ShowdownWorker:
             if new_state0 == state0 and new_state1 == state1:
                 stale_count += 1
                 if stale_count >= 5:
-                    raise ProtocolError(
-                        "State unchanged after 5 consecutive move attempts"
+                    return BattleResult(
+                        winner=-1,
+                        player_hp=p0.pokemon["hp"] if p0.pokemon else 0,
+                        opponent_hp=p1.pokemon["hp"] if p1.pokemon else 0,
+                        turns=p0.turn,
+                        player0=p0,
+                        player1=p1,
+                        userdata=userdata,
                     )
             else:
                 stale_count = 0

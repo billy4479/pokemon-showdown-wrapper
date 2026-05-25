@@ -12,7 +12,12 @@ const formatName = dex.formats.validate(
 const format = dex.formats.get(formatName, true);
 const ruleTable = dex.formats.getRuleTable(format);
 
-const data = JSON.parse(readFileSync(process.argv[2], "utf-8"));
+const filePath = process.argv[2];
+if (!filePath) {
+    console.error("Usage: validate-opponents <path-to-json>");
+    process.exit(1);
+}
+const data = JSON.parse(readFileSync(filePath, "utf-8"));
 
 const results = [];
 for (const entry of data) {
